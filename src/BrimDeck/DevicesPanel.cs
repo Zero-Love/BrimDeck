@@ -47,7 +47,7 @@ public partial class MainWindow
         bool seen = IsVisible && !IsSuppressed && !DisplayPower.Off;
         bool page = _expanded && CurrentPage == DeckPage.Devices && seen;
         // The collapsed reading is read for while it is chosen, before it shows: it joins the row only once a device reports.
-        bool strip = !_expanded && StripChoosesBattery && seen && _alert is null && EffectiveStyle != CompactStyle.Line;
+        bool strip = !_expanded && StripChoosesBattery && seen && !CompactNoticeUp && EffectiveStyle != CompactStyle.Line;
         _app.PresentDevices(this, page, strip);
         // Opened again, the page shows the readings as they are now, not as it left them.
         if (page && !_devicesShowing) { _devicesView?.Update(ShownDevices, DevicesSettled, motion: false); _app.Devices?.Refresh(); }
