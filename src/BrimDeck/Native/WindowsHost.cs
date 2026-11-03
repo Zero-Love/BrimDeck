@@ -397,9 +397,14 @@ public sealed class WindowsHost : IDisposable
     public static void ConfigureOverlay(Window window)
     {
         var handle = new WindowInteropHelper(window).Handle;
-        // WS_EX_NOACTIVATE makes WGC CreateForWindow fail with E_INVALIDARG. Keep the
-        // window capturable and reject mouse activation without swallowing the click.
-        // ShowActivated=False separately prevents activation when the window is shown.
+        // Keep the overlay out of Alt+Tab / the task switcher. ShowInTaskbar=False usually does
+        // this, but AllowsTransparency windows and some shell extensions (e.g. WindHawk Alt+Tab
+        // helpers) can still list it unless WS_EX_TOOLWINDOW is set and WS_EX_APPWINDOW cleared
+        // (upstream issue #199). Do NOT set WS_EX_NOACTIVATE: WGC CreateForWindow fails with
+        // E_INVALIDARG. ShowActivated=False and the WM_MOUSEACTIVATE hook below reject activation
+        // without swallowing the click.
+        long style = GetWindowLongPtr(handle, GwlExStyle).ToInt64();
+        SetWindowLongPtr(handle, GwlExStyle, new IntPtr((style | WsExToolWindow) & ~WsExAppWindow));
         HwndSource.FromHwnd(handle)?.AddHook(OverlayMessages);
     }
     private static IntPtr OverlayMessages(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -441,4 +446,8 @@ public sealed class WindowsHost : IDisposable
     [DllImport("dwmapi")] private static extern int DwmGetWindowAttribute(IntPtr window, int attribute, out int value, int size);
     [DllImport("user32")] private static extern IntPtr GetWindow(IntPtr window, uint command);
     [DllImport("user32", EntryPoint = "GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr window, int index);
-    [DllImport("user32")] private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);}
+    [DllImport("user32", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr window, int index, IntPtr value);
+    [DllImport("user32")] private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
+    private const int GwlExStyle = -20;
+    private const long WsExToolWindow = 0x80, WsExAppWindow = 0x40000;
+}

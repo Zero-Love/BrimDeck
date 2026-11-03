@@ -531,6 +531,10 @@ public sealed class DeckSettings
     public bool TrimMemoryWhenIdle { get; set; } = true;
     public bool CapsuleAutoWidth { get; set; } = true;
     public GripDoubleClick GripDoubleClick { get; set; } = GripDoubleClick.Move;
+    // Whether pointing at either end of the collapsed notch, capsule or indicator shows resize
+    // handles (MainWindow.Resize.cs). Off by choice so they are harder to trigger by accident next
+    // to a maximized window (upstream issue #198); the expanded panel's edge handles stay available.
+    public bool CollapsedResizeHandles { get; set; } = true;
     // What the collapsed readings showed before their table (CompactReadings). Kept to read older files and, written to match the
     // table (the preset it matches and the readings shown), for older versions.
     public CompactMonitorMode CompactMonitor { get; set; }

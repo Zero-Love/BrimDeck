@@ -36,12 +36,16 @@ public partial class MainWindow
         var handle = new WindowInteropHelper(this).Handle;
         if (handle == IntPtr.Zero) return;
         long style = GetWindowLongPtr(handle, ExStyle).ToInt64();
+        // Keep ToolWindow / clear AppWindow whenever ExStyle is rewritten so Alt+Tab exclusion
+        // (WindowsHost.ConfigureOverlay) survives pass-through toggles.
+        style = (style | ToolWindow) & ~AppWindow;
         SetWindowLongPtr(handle, ExStyle, new IntPtr(passing ? style | Transparent : style & ~Transparent));
         _passingClicks = passing;
     }
 
     private const int ExStyle = -20;
     private const long Transparent = 0x20; // WS_EX_TRANSPARENT
+    private const long ToolWindow = 0x80, AppWindow = 0x40000; // WS_EX_TOOLWINDOW, WS_EX_APPWINDOW
     [DllImport("user32", EntryPoint = "GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr window, int index);
     [DllImport("user32", EntryPoint = "SetWindowLongPtrW")] private static extern IntPtr SetWindowLongPtr(IntPtr window, int index, IntPtr value);
 }
